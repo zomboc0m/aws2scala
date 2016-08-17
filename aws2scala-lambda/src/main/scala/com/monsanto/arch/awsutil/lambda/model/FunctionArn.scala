@@ -19,7 +19,7 @@ object FunctionArn {
       }
   }
 
-  private[awsutil] val keyArnPF: PartialFunction[Arn.ArnParts, FunctionArn] = {
+  private[awsutil] val functionArnPF: PartialFunction[Arn.ArnParts, FunctionArn] = {
     case (_, Arn.Namespace.Lambda, Some(region), Some(account), FunctionResourceRegex(name)) ⇒
       FunctionArn(region, account, name)
   }

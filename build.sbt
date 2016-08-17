@@ -275,7 +275,7 @@ lazy val kmsTests = Project("aws2scala-kms-tests", file("aws2scala-kms-tests"))
   )
 
 lazy val lambda = Project("aws2scala-lambda", file("aws2scala-lambda"))
-  .dependsOn(core)
+  .dependsOn(core, iam)
   .settings(
     commonSettings,
     bintrayPublishingSettings,
