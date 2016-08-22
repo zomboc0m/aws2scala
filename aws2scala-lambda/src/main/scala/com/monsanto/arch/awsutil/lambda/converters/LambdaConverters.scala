@@ -1,7 +1,9 @@
-package com.monsanto.arch.awsutil.converters
+package com.monsanto.arch.awsutil.lambda.converters
+
+import java.text.SimpleDateFormat
 
 import com.amazonaws.services.lambda.{model => aws}
-import com.monsanto.arch.awsutil.lambda.model.{CodeLocation, FunctionArn, GetFunctionRequest, LambdaFunction,Runtime}
+import com.monsanto.arch.awsutil.lambda.model.{CodeLocation, FunctionArn, GetFunctionRequest, LambdaFunction, Runtime}
 
 object LambdaConverters {
   implicit class AwsGetFunctionRequest(val request: aws.GetFunctionRequest) extends AnyVal {
@@ -19,8 +21,8 @@ object LambdaConverters {
           throw new IllegalArgumentException(s"Could not find Scala equivalent for $runtimeName"))
 
       def parseDate(timestamp: String) = {
-        val lm = java.time.Instant.parse(timestamp)
-        java.util.Date.from(lm)
+        val format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+        format.parse(timestamp)
       }
 
       val code = result.getCode

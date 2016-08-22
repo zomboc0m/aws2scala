@@ -436,6 +436,7 @@ lazy val aws2scala = (project in file("."))
     ec2, ec2Testkit, ec2Tests,
     kms, kmsTestkit, kmsTests,
     iam, iamTestkit, iamTests,
+    lambda,
     rds,
     s3, s3Testkit, s3Tests,
     sns, snsTestkit, snsTests,
@@ -444,7 +445,8 @@ lazy val aws2scala = (project in file("."))
     integrationTests)
   .settings(
     commonSettings,
-    noPublishingSettings,
+    bintrayPublishingSettings,
+//    noPublishingSettings,
     // unidoc
     unidocSettings,
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(testSupport, coreTestSupport)
