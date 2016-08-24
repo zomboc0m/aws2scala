@@ -1,10 +1,11 @@
-package com.monsanto.arch.awsutil.lambda.converters
+package com.monsanto.arch.awsutil.converters
 
 import java.text.SimpleDateFormat
 
 import com.amazonaws.services.lambda.{model => aws}
 import com.monsanto.arch.awsutil.lambda.model.{CodeLocation, FunctionArn, GetFunctionRequest, LambdaFunction, Runtime}
 
+/** Utility for converting ''aws2scala-lambda'' objects to/from their AWS counterparts. */
 object LambdaConverters {
   implicit class AwsGetFunctionRequest(val request: aws.GetFunctionRequest) extends AnyVal {
     def asScala: GetFunctionRequest = GetFunctionRequest(request.getFunctionName)
