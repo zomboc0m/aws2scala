@@ -275,12 +275,34 @@ lazy val kmsTests = Project("aws2scala-kms-tests", file("aws2scala-kms-tests"))
   )
 
 lazy val lambda = Project("aws2scala-lambda", file("aws2scala-lambda"))
-  .dependsOn(core, iam)
+  .dependsOn(core)
   .settings(
     commonSettings,
     bintrayPublishingSettings,
     description := "Client for AWS Lambda Service",
     libraryDependencies += awsDependency("lambda")
+  )
+
+lazy val lambdaTestkit = Project("aws2scala-lambda-testkit", file("aws2scala-lambda-testkit"))
+  .dependsOn(lambda, coreTestkit, iamTestkit)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-lambda",
+    libraryDependencies += scalaCheck
+  )
+
+lazy val lambdaTests = Project("aws2scala-lambda-tests", file("aws2scala-lambda-tests"))
+  .dependsOn(
+    lambda          % "test",
+    lambdaTestkit   % "test",
+    coreTestSupport % "test",
+    testSupport     % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Tests for aws2scala-lambda"
   )
 
 lazy val rds = Project("aws2scala-rds", file("aws2scala-rds"))
