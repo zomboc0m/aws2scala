@@ -440,7 +440,7 @@ lazy val stsTests = Project("aws2scala-sts-tests", file("aws2scala-sts-tests"))
   )
 
 lazy val integrationTests = Project("aws2scala-integration-tests", file("aws2scala-integration-tests"))
-  .dependsOn(core, testSupport, cloudFormation, ec2, iam, kms, rds, s3, sns, sqs, sts)
+  .dependsOn(core, testSupport, cloudFormation, ec2, iam, kms, lambda, rds, s3, sns, sqs, sts)
   .configs(IntegrationTest)
   .settings(
     commonSettings,
@@ -458,7 +458,7 @@ lazy val aws2scala = (project in file("."))
     ec2, ec2Testkit, ec2Tests,
     kms, kmsTestkit, kmsTests,
     iam, iamTestkit, iamTests,
-    lambda,
+    lambda, lambdaTestkit, lambdaTests,
     rds,
     s3, s3Testkit, s3Tests,
     sns, snsTestkit, snsTests,

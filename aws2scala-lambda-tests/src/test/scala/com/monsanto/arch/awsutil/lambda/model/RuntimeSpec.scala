@@ -19,5 +19,11 @@ class RuntimeSpec extends FreeSpec {
         Runtime.unapply(r.name) shouldBe Some(r)
       }
     }
+
+    "can be arbitrarily generated" in {
+      forAll(runtimes) { r ⇒
+        Runtime.values.contains(r)
+      }
+    }
   }
 }

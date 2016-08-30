@@ -9,10 +9,6 @@ import com.monsanto.arch.awsutil.impl.ShutdownHook
 import com.monsanto.arch.awsutil.lambda.model.FunctionArn
 import com.monsanto.arch.awsutil.{Arn, AwsClientProvider, AwsSettings}
 
-
-/**
-  * Created by stevenkohner on 8/16/16.
-  */
 object Lambda extends AwsClientProvider[StreamingLambdaClient,AsyncLambdaClient] {
   private[awsutil] def init(): Unit = {
     Arn.registerArnPartialFunctions(

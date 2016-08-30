@@ -1,7 +1,5 @@
 package com.monsanto.arch.awsutil.lambda.model
 
-import java.util.Date
-
 /** LambdaFunction represents a lambda function.  It is a composite of the
   * Configuration and Code objects returned by the GetFunction function in aws
   *
@@ -25,9 +23,9 @@ case class LambdaFunction(
                          runtime: Runtime,
                          handler: String,
                          role: String,
-                         description: Option[String],
-                         timeout: Option[Int],
-                         lastModified: Option[Date],
-                         version: Option[String],
-                         codeHash: Option[String],
-                         codeLocation: Option[CodeLocation])
+                         description: String,
+                         timeout: Int,
+                         lastModified: String,
+                         version: String,
+                         codeHash: String,
+                         codeLocation: CodeLocation)
