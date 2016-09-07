@@ -8,7 +8,7 @@ import com.monsanto.arch.awsutil.lambda.model._
 import com.monsanto.arch.awsutil.test_support.{AwsMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Samplers._
-import com.monsanto.arch.awsutil.testkit.LambdaGen
+import com.monsanto.arch.awsutil.testkit.{CoreGen, LambdaGen}
 import com.monsanto.arch.awsutil.testkit.LambdaScalaCheckImplicits._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
@@ -33,6 +33,23 @@ class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Ma
 
         val result = Source.single(request).via(streaming.functionCreator).runWith(Sink.head).futureValue
         result shouldBe createdFunction
+      }
+    }
+
+    "a function deleter" in {
+      forAll(CoreGen.iamName) { functionName ⇒
+        val lambda = mock[AWSLambdaAsync]("lambda")
+        val streaming = new DefaultStreamingLambdaClient(lambda)
+
+        (lambda.deleteFunctionAsync(_: aws.DeleteFunctionRequest, _: AsyncHandler[aws.DeleteFunctionRequest, aws.DeleteFunctionResult]))
+          .expects(whereRequest { r ⇒
+            r should have ('functionName (functionName))
+            true
+          })
+          .withVoidAwsSuccess()
+
+        val result = Source.single(functionName).via(streaming.functionDeleter).runWith(Sink.head).futureValue
+        result shouldBe functionName
       }
     }
 

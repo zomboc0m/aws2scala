@@ -1,5 +1,6 @@
 package com.monsanto.arch.awsutil.lambda
 
+import akka.Done
 import akka.stream.Materializer
 import com.monsanto.arch.awsutil.AsyncAwsClient
 import com.monsanto.arch.awsutil.lambda.model.{CreateFunctionRequest, FunctionArn, FunctionCode, LambdaFunction, Runtime}
@@ -33,6 +34,9 @@ trait AsyncLambdaClient extends AsyncAwsClient {
     * @param request a request to aws to create a new lambda function
     * */
   def createFunction(request: CreateFunctionRequest)(implicit m: Materializer): Future[LambdaFunction]
+
+  /** Deletes the function with the given name */
+  def deleteFunction(name: String)(implicit m: Materializer): Future[Done]
 
   /** Retrieves information about a lambda function based on its name
     * */

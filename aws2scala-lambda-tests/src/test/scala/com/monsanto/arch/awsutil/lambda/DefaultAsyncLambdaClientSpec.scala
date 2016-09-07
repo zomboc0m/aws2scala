@@ -2,6 +2,7 @@ package com.monsanto.arch.awsutil.lambda
 
 import java.nio.file.Files
 
+import akka.Done
 import com.monsanto.arch.awsutil.lambda.model.{CreateFunctionRequest, FunctionCode, GetFunctionRequest, LambdaFunction}
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.Samplers.EnhancedGen
@@ -83,6 +84,21 @@ class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMo
         }
       }
     }
+
+    "delete a lambda function" in {
+      forAll(CoreGen.iamName → "functionName") { functionName ⇒
+        val streaming = mock[StreamingLambdaClient]("streaming")
+        val async = new DefaultAsyncLambdaClient(streaming)
+
+        (streaming.functionDeleter _)
+          .expects()
+          .returningFlow(functionName, functionName)
+
+        val result = async.deleteFunction(functionName).futureValue
+        result shouldBe Done
+      }
+    }
+
     "get a lambda function" - {
       "specified by name" in {
         forAll { (function: LambdaFunction) ⇒
