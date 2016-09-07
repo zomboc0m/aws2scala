@@ -7,6 +7,8 @@ import com.monsanto.arch.awsutil.converters.LambdaConverters._
 import com.monsanto.arch.awsutil.lambda.model._
 import com.monsanto.arch.awsutil.test_support.{AwsMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
+import com.monsanto.arch.awsutil.test_support.Samplers._
+import com.monsanto.arch.awsutil.testkit.LambdaGen
 import com.monsanto.arch.awsutil.testkit.LambdaScalaCheckImplicits._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
@@ -15,6 +17,25 @@ import org.scalatest.FreeSpec
 
 class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Materialised with AwsMockUtils {
   "the default StreamingLambdaClient provides" - {
+    "a function creator" in {
+      forAll { (request: CreateFunctionRequest) ⇒
+        val lambda = mock[AWSLambdaAsync]("lambda")
+        val streaming = new DefaultStreamingLambdaClient(lambda)
+        val createdFunction = LambdaGen.createdFunction(request).reallySample
+        (lambda.createFunctionAsync(_: aws.CreateFunctionRequest, _: AsyncHandler[aws.CreateFunctionRequest, aws.CreateFunctionResult]))
+          .expects(whereRequest { r ⇒
+            r should have(
+              'FunctionName (request.name)
+            )
+            true
+          })
+          .withAwsSuccess(LambdaGen.createFunctionResultFor(createdFunction))
+
+        val result = Source.single(request).via(streaming.functionCreator).runWith(Sink.head).futureValue
+        result shouldBe createdFunction
+      }
+    }
+
     "a function getter" in {
       forAll { function: LambdaFunction ⇒
         val lambda = mock[AWSLambdaAsync]("lambda")
@@ -23,11 +44,11 @@ class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Ma
         val request = GetFunctionRequest(function.name)
 
         (lambda.getFunctionAsync(_: aws.GetFunctionRequest, _: AsyncHandler[aws.GetFunctionRequest, aws.GetFunctionResult]))
-          .expects(whereRequest{ r ⇒
+          .expects(whereRequest { r ⇒
             r.asScala shouldBe request
             true
           })
-            .withAwsSuccess(function.asAws)
+          .withAwsSuccess(function.asAws)
         val result = Source.single(request).via(streaming.functionGetter).runWith(Sink.head).futureValue
         result shouldBe function
       }
