@@ -4,13 +4,14 @@ import java.util.concurrent.ExecutorService
 
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.lambda.AWSLambdaAsyncClient
-
+import com.monsanto.arch.awsutil.auth.policy.action.LambdaAction
 import com.monsanto.arch.awsutil.impl.ShutdownHook
 import com.monsanto.arch.awsutil.lambda.model.FunctionArn
 import com.monsanto.arch.awsutil.{Arn, AwsClientProvider, AwsSettings}
 
 object Lambda extends AwsClientProvider[StreamingLambdaClient,AsyncLambdaClient] {
   private[awsutil] def init(): Unit = {
+    LambdaAction.registerActions()
     Arn.registerArnPartialFunctions(
       FunctionArn.functionArnPF
     )

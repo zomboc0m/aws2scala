@@ -2,6 +2,8 @@ package com.monsanto.arch.awsutil.lambda
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
+import com.monsanto.arch.awsutil.{Account, Arn}
+import com.monsanto.arch.awsutil.auth.policy.{Action, Principal}
 import com.monsanto.arch.awsutil.lambda.model.{CreateFunctionRequest, _}
 
 private[awsutil] class DefaultAsyncLambdaClient(streaming: StreamingLambdaClient) extends AsyncLambdaClient {
@@ -28,4 +30,14 @@ private[awsutil] class DefaultAsyncLambdaClient(streaming: StreamingLambdaClient
 
   override def getFunction(functionArn: FunctionArn)(implicit m: Materializer) =
     getFunction(functionArn.arnString)(m)
+
+  override def addPermission(statementId: String, functionName: String, principal: Principal, action: Action)(implicit m: Materializer) =
+    Source.single(AddPermissionRequest(statementId,functionName,principal,action))
+      .via(streaming.permissionAdder)
+      .runWith(Sink.head)
+
+  override def addPermission(statementId: String, functionName: String, principal: Principal, action: Action, sourceArn: Arn, sourceAccount: Account)(implicit m: Materializer) =
+    Source.single(AddPermissionRequest(statementId,functionName,principal,action, Some(sourceArn.arnString), Some(sourceAccount.id)))
+      .via(streaming.permissionAdder)
+      .runWith(Sink.head)
 }

@@ -144,4 +144,16 @@ object LambdaConverters {
     }
   }
 
+  implicit class ScalaAddPermissionRequest(val request: AddPermissionRequest) extends AnyVal {
+    def asAws: aws.AddPermissionRequest = {
+      new aws.AddPermissionRequest()
+        .withAction(request.action.name)
+        .withFunctionName(request.functionName)
+        .withPrincipal(request.principal.id)
+        .withSourceAccount(request.sourceAccount.orNull)
+        .withSourceArn(request.sourceArn.orNull)
+        .withStatementId(request.statementId)
+    }
+  }
+
 }

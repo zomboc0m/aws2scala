@@ -1,8 +1,10 @@
 package com.monsanto.arch.awsutil.testkit
 
 import com.amazonaws.services.lambda.{model => aws}
-import com.monsanto.arch.awsutil.Account
-import com.monsanto.arch.awsutil.lambda.model.{CreateFunctionRequest, FunctionArn, LambdaFunction}
+import com.monsanto.arch.awsutil.{Account, Arn}
+import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
+import com.monsanto.arch.awsutil.lambda.model.{AddPermissionRequest, CreateFunctionRequest, FunctionArn, LambdaFunction}
 import com.monsanto.arch.awsutil.regions.Region
 import com.monsanto.arch.awsutil.testkit.UtilGen._
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -77,6 +79,18 @@ object LambdaGen {
         request.vpcConfig,
         None)
     }
+  }
+
+  def policyFor(request: AddPermissionRequest): Policy = {
+    policy(
+      id(request.statementId),
+      statements(
+        allow(
+          principals(request.principal),
+          actions(request.action)
+        )
+      )
+    )
   }
 
 }

@@ -3,13 +3,18 @@ package com.monsanto.arch.awsutil.lambda
 import java.nio.file.Files
 
 import akka.Done
-import com.monsanto.arch.awsutil.lambda.model.{CreateFunctionRequest, FunctionCode, GetFunctionRequest, LambdaFunction}
+import com.monsanto.arch.awsutil.{Account, Arn}
+import com.monsanto.arch.awsutil.auth.policy.Principal
+import com.monsanto.arch.awsutil.auth.policy.action.LambdaAction
+import com.monsanto.arch.awsutil.lambda.model._
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.Samplers.EnhancedGen
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.testkit.{CoreGen, LambdaGen, UtilGen}
 import com.monsanto.arch.awsutil.testkit.LambdaScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalacheck.Arbitrary._
+import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
@@ -18,7 +23,7 @@ import org.scalatest.FreeSpec
 class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMockUtils with Materialised {
   "the asynchronous Lambda client should" - {
     "create a lambda function" - {
-      "using a path to the sipped function code, as well as the function's name, handler, role, and runtime" in {
+      "using a path to the zipped function code, as well as the function's name, handler, role, and runtime" in {
         forAll(
           CoreGen.iamName → "functionName",
           arbitrary[Array[Byte]] → "zipData",
@@ -129,6 +134,53 @@ class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMo
 
           val result = async.getFunction(function.arn).futureValue
           result shouldBe function
+        }
+      }
+    }
+    "add a permission to the lambda function" - {
+      "using just the required arguments" in {
+        forAll (
+          CoreGen.iamName → "id",
+          LambdaGen.functionName → "functionName",
+          arbitrary[Principal] → "principal",
+          Gen.oneOf(LambdaAction.values) → "action"
+        ) { (id, functionName, principal, action) =>
+          val streaming = mock[StreamingLambdaClient]("streaming")
+          val async = new DefaultAsyncLambdaClient((streaming))
+
+          val request = AddPermissionRequest(id, functionName, principal, action)
+          val createdPolicyStatement = LambdaGen.policyFor(request).statements(0)
+
+          (streaming.permissionAdder _)
+            .expects()
+            .returningFlow(request, createdPolicyStatement)
+
+          val result = async.addPermission(id, functionName, principal, action).futureValue
+          result shouldBe createdPolicyStatement
+        }
+      }
+
+      "including a source arn and account" in {
+        forAll (
+          CoreGen.iamName → "id",
+          LambdaGen.functionName → "functionName",
+          arbitrary[Principal] → "principal",
+          Gen.oneOf(LambdaAction.values) → "action",
+          arbitrary[Arn] → "sourceArn",
+          arbitrary[Account] → "sourceAccount"
+        ) { (id, functionName, principal, action, sourceArn, sourceAccount) =>
+          val streaming = mock[StreamingLambdaClient]("streaming")
+          val async = new DefaultAsyncLambdaClient((streaming))
+
+          val request = AddPermissionRequest(id, functionName, principal, action, Some(sourceArn.arnString), Some(sourceAccount.id))
+          val createdPolicyStatement = LambdaGen.policyFor(request).statements(0)
+
+          (streaming.permissionAdder _)
+            .expects()
+            .returningFlow(request, createdPolicyStatement)
+
+          val result = async.addPermission(id, functionName, principal, action, sourceArn, sourceAccount).futureValue
+          result shouldBe createdPolicyStatement
         }
       }
     }

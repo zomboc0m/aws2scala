@@ -1,10 +1,13 @@
 package com.monsanto.arch.awsutil.testkit
 
 import java.nio.ByteBuffer
-import com.monsanto.arch.awsutil.Account
+
+import com.monsanto.arch.awsutil.{Account, Arn}
 import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
 import com.monsanto.arch.awsutil.lambda.Lambda
 import com.monsanto.arch.awsutil.lambda.model._
+import com.monsanto.arch.awsutil.partitions.Partition
+import com.monsanto.arch.awsutil.regions.Region
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import org.scalacheck.Arbitrary.arbitrary
@@ -135,5 +138,20 @@ object LambdaScalaCheckImplicits {
       key <- arbitrary[String] suchThat (!_.isEmpty)
       version <- arbitrary[String]
     } yield FunctionCode.fromS3Bucket(bucket, key, version)
+
+  implicit lazy val arbArn: Arbitrary[Arn] =
+    Arbitrary {
+      for {
+        partition ← arbitrary[Partition]
+        account ← Gen.option(CoreGen.accountId).map(_.map(id ⇒ Account(id, partition)))
+        region ← arbitrary[Option[Region]]
+        namespace ← arbitrary[Arn.Namespace]
+        resourceStr ← Gen.identifier
+      } yield {
+        new Arn(partition, namespace, region, account) {
+          override val resource = resourceStr
+        }
+      }
+    }
 
 }
