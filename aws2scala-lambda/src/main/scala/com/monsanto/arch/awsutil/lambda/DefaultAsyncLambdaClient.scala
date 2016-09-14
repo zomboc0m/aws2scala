@@ -19,9 +19,9 @@ private[awsutil] class DefaultAsyncLambdaClient(streaming: StreamingLambdaClient
       .runWith(Sink.head)
 
   override def deleteFunction(name: String)(implicit m: Materializer) =
-  Source.single(name)
-    .via(streaming.functionDeleter)
-    .runWith(Sink.ignore)
+    Source.single(name)
+      .via(streaming.functionDeleter)
+      .runWith(Sink.ignore)
 
   override def getFunction(functionName: String)(implicit m: Materializer) =
     Source.single(GetFunctionRequest(functionName))
@@ -32,12 +32,22 @@ private[awsutil] class DefaultAsyncLambdaClient(streaming: StreamingLambdaClient
     getFunction(functionArn.arnString)(m)
 
   override def addPermission(statementId: String, functionName: String, principal: Principal, action: Action)(implicit m: Materializer) =
-    Source.single(AddPermissionRequest(statementId,functionName,principal,action))
+    Source.single(AddPermissionRequest(statementId, functionName, principal, action))
       .via(streaming.permissionAdder)
       .runWith(Sink.head)
 
   override def addPermission(statementId: String, functionName: String, principal: Principal, action: Action, sourceArn: Arn, sourceAccount: Account)(implicit m: Materializer) =
-    Source.single(AddPermissionRequest(statementId,functionName,principal,action, Some(sourceArn.arnString), Some(sourceAccount.id)))
+    Source.single(AddPermissionRequest(statementId, functionName, principal, action, Some(sourceArn.arnString), Some(sourceAccount.id)))
       .via(streaming.permissionAdder)
+      .runWith(Sink.head)
+
+  override def removePermission(statementId: String, functionName: String)(implicit m: Materializer) =
+    Source.single(RemovePermissionRequest(statementId, functionName))
+      .via(streaming.permissionRemover)
+      .runWith(Sink.ignore)
+
+  override def getPolicy(functionName: String)(implicit m: Materializer) =
+    Source.single(functionName)
+      .via(streaming.policyGetter)
       .runWith(Sink.head)
 }

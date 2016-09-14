@@ -177,6 +177,41 @@ lazy val cloudFormation = Project("aws2scala-cloudformation", file("aws2scala-cl
     )
   )
 
+lazy val config = Project("aws2scala-config", file("aws2scala-config"))
+  .dependsOn(core)
+  .settings(
+  commonSettings,
+  bintrayPublishingSettings,
+  description := "Client for AWS Config",
+  libraryDependencies += awsDependency("config")
+)
+
+lazy val configTestkit = Project("aws2scala-config-testkit", file("aws2scala-config-testkit"))
+  .dependsOn(config, coreTestkit)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-config",
+    libraryDependencies ++= Seq(
+      scalaCheck,
+      "org.bouncycastle" % "bcprov-jdk15on" % "1.54",
+      "org.bouncycastle" % "bcpkix-jdk15on" % "1.54"
+    )
+  )
+
+lazy val configTests = Project("aws2scala-config-tests", file("aws2scala-config-tests"))
+  .dependsOn(
+    config             % "test",
+    configTestkit      % "test",
+    coreTestSupport % "test",
+    testSupport     % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Tests for aws2scala-config"
+  )
+
 lazy val ec2 = Project("aws2scala-ec2", file("aws2scala-ec2"))
   .dependsOn(core)
   .settings(

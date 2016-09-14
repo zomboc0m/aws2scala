@@ -4,8 +4,8 @@ import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.amazonaws.services.lambda.{AWSLambdaAsync, model => aws}
 import com.fasterxml.jackson.core.JsonFactory
-import com.monsanto.arch.awsutil.auth.policy.{Statement, PolicyJsonSupport}
-import com.monsanto.arch.awsutil.lambda.model.{AddPermissionRequest, CreateFunctionRequest, GetFunctionRequest}
+import com.monsanto.arch.awsutil.auth.policy.{Policy, PolicyJsonSupport, Statement}
+import com.monsanto.arch.awsutil.lambda.model.{AddPermissionRequest, CreateFunctionRequest, GetFunctionRequest, RemovePermissionRequest}
 import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
 import com.monsanto.arch.awsutil.converters.LambdaConverters._
 
@@ -31,11 +31,27 @@ class DefaultStreamingLambdaClient(lambda: AWSLambdaAsync) extends StreamingLamb
       .map(_.asScala)
       .named("Lambda.functionGetter")
 
+  override val policyGetter =
+    Flow[String]
+      .map(new aws.GetPolicyRequest()
+        .withFunctionName(_))
+      .via[aws.GetPolicyResult, NotUsed](AWSFlow.simple(lambda.getPolicyAsync))
+      .map(r => Policy.fromJson(r.getPolicy))
+
+  override val permissionRemover =
+    Flow[RemovePermissionRequest]
+      .map(_.asAws)
+      .via(AWSFlow.simple(
+        AWSFlowAdapter.returnInput[aws.RemovePermissionRequest, aws.RemovePermissionResult](lambda.removePermissionAsync)))
+      .map(_.getStatementId)
+      .named("Lambda.PermissionRemover")
+
   override val permissionAdder =
     Flow[AddPermissionRequest]
       .map(_.asAws)
       .via[aws.AddPermissionResult, NotUsed](AWSFlow.simple(lambda.addPermissionAsync))
       .map(r => extractStatementContents(r.getStatement))
+      .named("Lambda.PermissionAdder")
 
   //the format of the string returned by the AddPermissionResult object is different from
   // the strings our parser expects, so we need to fix that before parsing

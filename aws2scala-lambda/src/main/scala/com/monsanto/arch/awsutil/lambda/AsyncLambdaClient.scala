@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.lambda
 import akka.Done
 import akka.stream.Materializer
 import com.monsanto.arch.awsutil.{Account, Arn, AsyncAwsClient}
-import com.monsanto.arch.awsutil.auth.policy.{Action, Principal, Statement}
+import com.monsanto.arch.awsutil.auth.policy.{Action, Policy, Principal, Statement}
 import com.monsanto.arch.awsutil.lambda.model._
 
 import scala.concurrent.Future
@@ -72,4 +72,14 @@ trait AsyncLambdaClient extends AsyncAwsClient {
     *                      the principal, this parameter can be used to further restrict permission
     * */
   def addPermission(statementId: String, functionName: String, principal: Principal, action: Action, sourceArn: Arn, sourceAccount: Account)(implicit m: Materializer): Future[Statement]
+
+  /** Removes a permission from a lambda function
+    *
+    * @param statementId the id of the permission to remove
+    * @param functionName the name of the function from which to remove the permission.  Can be the function name or ARN string
+    * */
+  def removePermission(statementId:String, functionName: String)(implicit m: Materializer): Future[Done]
+
+  /** Retrieves the policy associated with a lambda function */
+  def getPolicy(functionName: String)(implicit m: Materializer): Future[Policy]
 }

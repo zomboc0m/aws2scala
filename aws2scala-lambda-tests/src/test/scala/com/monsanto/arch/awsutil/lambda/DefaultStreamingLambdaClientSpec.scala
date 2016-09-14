@@ -80,7 +80,7 @@ class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Ma
         result shouldBe function
       }
     }
-    //statementId: String, functionName: String, principal: Principal, action: Action, sourceArn: String, sourceAccount: Account
+
     "a permission adder" in {
       forAll(
         CoreGen.iamName → "id",
@@ -99,7 +99,7 @@ class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Ma
           val generator = jsonFactory.createGenerator(jsonWriter)
           generator.writeStartObject()
           generator.writeFieldName("Statement")
-          PolicyJsonSupport.statementToJson(generator,p.statements(0))
+          PolicyJsonSupport.statementToJson(generator, p.statements(0))
           generator.writeEndObject()
           generator.flush
           jsonWriter.toString
@@ -125,6 +125,47 @@ class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Ma
         val result = Source.single(request).via(streaming.permissionAdder).runWith(Sink.head).futureValue
         result shouldBe createdPolicy.statements(0)
       }
+    }
+
+    "a permission remover" in {
+      forAll(CoreGen.iamName, CoreGen.iamName) { (statementId: String, functionName: String) ⇒
+        val lambda = mock[AWSLambdaAsync]("lambda")
+        val streaming = new DefaultStreamingLambdaClient(lambda)
+
+        (lambda.removePermissionAsync(_: aws.RemovePermissionRequest, _: AsyncHandler[aws.RemovePermissionRequest, aws.RemovePermissionResult]))
+          .expects(whereRequest { r ⇒
+            r should have(
+              'statementId (statementId),
+              'functionName (functionName)
+            )
+            true
+          })
+          .withVoidAwsSuccess()
+
+        val result = Source.single(RemovePermissionRequest(statementId, functionName)).via(streaming.permissionRemover).runWith(Sink.head).futureValue
+        result shouldBe statementId
+      }
+    }
+  }
+
+  "a policy getter" in {
+    forAll(CoreGen.iamName) { functionName ⇒
+      val lambda = mock[AWSLambdaAsync]("lambda")
+      val streaming = new DefaultStreamingLambdaClient(lambda)
+
+      val policy = arbitrary[Policy].reallySample(1000)
+
+      (lambda.getPolicyAsync(_: aws.GetPolicyRequest, _: AsyncHandler[aws.GetPolicyRequest,aws.GetPolicyResult]))
+        .expects(whereRequest { r ⇒
+          r should have(
+            'functionName (functionName)
+          )
+          true
+        })
+        .withAwsSuccess(new aws.GetPolicyResult().withPolicy(policy.toJson))
+
+      val result = Source.single(functionName).via(streaming.policyGetter).runWith(Sink.head).futureValue
+      result shouldBe policy
     }
   }
 }

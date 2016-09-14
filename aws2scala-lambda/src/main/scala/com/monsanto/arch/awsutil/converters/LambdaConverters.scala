@@ -156,4 +156,12 @@ object LambdaConverters {
     }
   }
 
+  implicit class ScalaRemovePermissionRequest(val requset: RemovePermissionRequest) extends AnyVal {
+    def asAws: aws.RemovePermissionRequest = {
+      new aws.RemovePermissionRequest()
+        .withFunctionName(requset.functionName)
+        .withStatementId(requset.statementId)
+    }
+  }
+
 }

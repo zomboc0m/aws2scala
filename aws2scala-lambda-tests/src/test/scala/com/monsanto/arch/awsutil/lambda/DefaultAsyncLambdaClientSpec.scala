@@ -3,8 +3,9 @@ package com.monsanto.arch.awsutil.lambda
 import java.nio.file.Files
 
 import akka.Done
+import com.amazonaws.services.lambda.AWSLambdaAsync
 import com.monsanto.arch.awsutil.{Account, Arn}
-import com.monsanto.arch.awsutil.auth.policy.Principal
+import com.monsanto.arch.awsutil.auth.policy.{Policy, Principal}
 import com.monsanto.arch.awsutil.auth.policy.action.LambdaAction
 import com.monsanto.arch.awsutil.lambda.model._
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
@@ -182,6 +183,36 @@ class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMo
           val result = async.addPermission(id, functionName, principal, action, sourceArn, sourceAccount).futureValue
           result shouldBe createdPolicyStatement
         }
+      }
+    }
+
+    "remove a permission from a lambda function" in {
+      forAll(CoreGen.iamName → "statementId", CoreGen.iamName → "functionName") { (statementId, functionName) ⇒
+        val streaming = mock[StreamingLambdaClient]("streaming")
+        val async = new DefaultAsyncLambdaClient(streaming)
+
+        (streaming.permissionRemover _)
+          .expects()
+          .returningFlow(RemovePermissionRequest(statementId, functionName), statementId)
+
+        val result = async.removePermission(statementId, functionName).futureValue
+        result shouldBe Done
+      }
+    }
+
+    "get the policy associated with a lambda function" - {
+      forAll(CoreGen.iamName → "functionName") { functionName ⇒
+        val streaming = mock[StreamingLambdaClient]("streaming")
+        val async = new DefaultAsyncLambdaClient(streaming)
+
+        val policy = arbitrary[Policy].reallySample(1000)
+
+        (streaming.policyGetter _)
+          .expects()
+          .returningFlow(functionName, policy)
+
+        val result = async.getPolicy(functionName).futureValue
+        result shouldBe policy
       }
     }
   }
