@@ -8,6 +8,7 @@ val scalaCheck = "org.scalacheck"     %% "scalacheck"                          %
 val scalaTest  = "org.scalatest"      %% "scalatest"                           % "2.2.6"
 val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.2"
 val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.5.1"
+val json4sNative = "org.json4s"       %% "json4s-native"                       % "3.4.0"
 
 val compileOnlyOptions = Seq(
   "-deprecation",
@@ -178,16 +179,16 @@ lazy val cloudFormation = Project("aws2scala-cloudformation", file("aws2scala-cl
   )
 
 lazy val config = Project("aws2scala-config", file("aws2scala-config"))
-  .dependsOn(core)
+  .dependsOn(core, lambda)
   .settings(
   commonSettings,
   bintrayPublishingSettings,
   description := "Client for AWS Config",
-  libraryDependencies += awsDependency("config")
+  libraryDependencies ++= Seq(awsDependency("config"), json4sNative, sprayJson)
 )
 
 lazy val configTestkit = Project("aws2scala-config-testkit", file("aws2scala-config-testkit"))
-  .dependsOn(config, coreTestkit)
+  .dependsOn(config, coreTestkit, lambdaTestkit)
   .settings(
     commonSettings,
     bintrayPublishingSettings,
@@ -475,7 +476,7 @@ lazy val stsTests = Project("aws2scala-sts-tests", file("aws2scala-sts-tests"))
   )
 
 lazy val integrationTests = Project("aws2scala-integration-tests", file("aws2scala-integration-tests"))
-  .dependsOn(core, testSupport, cloudFormation, ec2, iam, kms, lambda, rds, s3, sns, sqs, sts)
+  .dependsOn(core, testSupport, cloudFormation, config, ec2, iam, kms, lambda, rds, s3, sns, sqs, sts)
   .configs(IntegrationTest)
   .settings(
     commonSettings,
@@ -490,6 +491,7 @@ lazy val aws2scala = (project in file("."))
     testSupport,
     coreMacros, core, coreTestSupport, coreTests, coreTestkit,
     cloudFormation,
+    config, configTestkit, configTests,
     ec2, ec2Testkit, ec2Tests,
     kms, kmsTestkit, kmsTests,
     iam, iamTestkit, iamTests,

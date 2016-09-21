@@ -8,13 +8,13 @@ import com.amazonaws.services.lambda.{AWSLambdaAsync, model => aws}
 import com.fasterxml.jackson.core.JsonFactory
 import com.monsanto.arch.awsutil.auth.policy.action.LambdaAction
 import com.monsanto.arch.awsutil.{Account, Arn}
-import com.monsanto.arch.awsutil.auth.policy.{Action, Policy, PolicyJsonSupport, Principal}
+import com.monsanto.arch.awsutil.auth.policy.{Policy, PolicyJsonSupport, Principal}
 import com.monsanto.arch.awsutil.converters.LambdaConverters._
 import com.monsanto.arch.awsutil.lambda.model._
 import com.monsanto.arch.awsutil.test_support.{AwsMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Samplers._
-import com.monsanto.arch.awsutil.testkit.{CoreGen, LambdaGen, UtilGen}
+import com.monsanto.arch.awsutil.testkit.{CoreGen, LambdaGen}
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.LambdaScalaCheckImplicits._
 import org.scalacheck.Arbitrary._
@@ -23,7 +23,6 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 import org.scalatest.FreeSpec
-import spray.json.JsonWriter
 
 class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Materialised with AwsMockUtils {
   "the default StreamingLambdaClient provides" - {

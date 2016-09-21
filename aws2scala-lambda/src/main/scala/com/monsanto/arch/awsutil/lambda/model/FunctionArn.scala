@@ -24,7 +24,7 @@ object FunctionArn {
     /** Extracts a `FunctionArn` object from the given ARN string. */
     def unapply(arnString: String): Option[FunctionArn] =
       arnString match {
-        case Arn.fromArnString(accountArn: FunctionArn) ⇒ Some(accountArn)
+        case Arn.fromArnString(functionArn: FunctionArn) ⇒ Some(functionArn)
         case _ ⇒ None
       }
   }
