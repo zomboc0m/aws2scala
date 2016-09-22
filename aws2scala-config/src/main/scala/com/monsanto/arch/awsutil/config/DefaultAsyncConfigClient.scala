@@ -11,4 +11,9 @@ class DefaultAsyncConfigClient(streaming: StreamingConfigClient) extends AsyncCo
     Source.single(PutRuleRequest(rule))
       .via(streaming.rulePutter)
       .runWith(Sink.ignore)
+
+  override def deleteConfigRule(name: String)(implicit m: Materializer): Future[Done] =
+    Source.single(name)
+      .via(streaming.ruleDeleter)
+      .runWith(Sink.ignore)
 }

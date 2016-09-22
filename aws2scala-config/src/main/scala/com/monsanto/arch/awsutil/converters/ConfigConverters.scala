@@ -6,9 +6,7 @@ import collection.JavaConverters._
 import org.json4s.native.Json
 import org.json4s.DefaultFormats
 
-/**
-  * Created by stevenkohner on 9/19/16.
-  */
+/** Provides converters between ''aws2scala-config'' objects and their AWS Java SDK counterparts. */
 object ConfigConverters {
 
   implicit class AwsConfigRule(val rule: aws.ConfigRule) extends AnyVal {
@@ -18,7 +16,7 @@ object ConfigConverters {
       Option(rule.getConfigRuleId),
       Option(rule.getConfigRuleName),
       Option(rule.getDescription),
-      Option(rule.getInputParameters).map(p => Json(DefaultFormats).read[Map[String,Any]](p)),
+      Option(rule.getInputParameters).map(p => Json(DefaultFormats).read[Map[String, Any]](p)),
       Option(rule.getConfigRuleState).map(RuleState(_)),
       Option(rule.getMaximumExecutionFrequency).map(ExecutionFrequency(_)),
       Option(rule.getScope).map(_.asScala)
@@ -67,7 +65,6 @@ object ConfigConverters {
     }
   }
 
-
   implicit class AwsSourceDetail(val detail: aws.SourceDetail) extends AnyVal {
     def asScala: SourceDetail =
       SourceDetail(
@@ -76,7 +73,6 @@ object ConfigConverters {
         MessageType.unapply(detail.getMessageType)
       )
   }
-
 
   implicit class ScalaSourceDetail(val detail: SourceDetail) extends AnyVal {
     def asAws: aws.SourceDetail = {
@@ -154,7 +150,6 @@ object ConfigConverters {
       a
     }
   }
-
 
   implicit class AwsResourceType(val resource: aws.ResourceType) extends AnyVal {
     def asScala: ResourceType = ResourceType(resource.toString)

@@ -8,6 +8,7 @@ import com.monsanto.arch.awsutil.converters.ConfigConverters._
 import com.monsanto.arch.awsutil.testkit.ConfigScalaCheckImplicits._
 import com.monsanto.arch.awsutil.test_support.{AwsMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
+import com.monsanto.arch.awsutil.testkit.CoreGen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -32,6 +33,23 @@ class DefaultStreamingConfigClientSpec extends FreeSpec with MockFactory with Ma
         val result = Source.single(PutRuleRequest(rule)).via(streaming.rulePutter).runWith(Sink.head).futureValue
 
         result shouldBe rule
+      }
+    }
+
+    "a rule deleter" in {
+      forAll(CoreGen.iamName) { ruleName ⇒
+        val config = mock[AmazonConfigAsync]("config")
+        val streaming = new DefaultStreamingConfigClient(config)
+
+        (config.deleteConfigRuleAsync(_: aws.DeleteConfigRuleRequest, _: AsyncHandler[aws.DeleteConfigRuleRequest, aws.DeleteConfigRuleResult]))
+          .expects(whereRequest { r ⇒
+            r should have ('configRuleName (ruleName))
+            true
+          })
+          .withVoidAwsSuccess()
+
+        val result = Source.single(ruleName).via(streaming.ruleDeleter).runWith(Sink.head).futureValue
+        result shouldBe ruleName
       }
     }
   }
