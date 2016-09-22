@@ -11,9 +11,6 @@ import com.monsanto.arch.awsutil.testkit.ConfigGen._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import org.scalacheck.Arbitrary.arbitrary
 
-/**
-  * Created by stevenkohner on 9/20/16.
-  */
 object ConfigScalaCheckImplicits {
 
   implicit lazy val arbConfigRule: Arbitrary[ConfigRule] =

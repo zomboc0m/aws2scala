@@ -4,9 +4,6 @@ import com.monsanto.arch.awsutil.config.Config
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary.arbitrary
 
-/**
-  * Created by stevenkohner on 9/21/16.
-  */
 object ConfigGen {
   Config.init()
 

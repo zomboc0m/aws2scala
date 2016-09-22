@@ -14,4 +14,6 @@ trait AsyncConfigClient extends AsyncAwsClient{
 
   /** Deletes an existing config rule */
   def deleteConfigRule(name: String)(implicit m: Materializer): Future[Done]
+
+  def describeConfigRules(names: Seq[String])(implicit m: Materializer): Future[Seq[ConfigRule]]
 }

@@ -1,7 +1,7 @@
 package com.monsanto.arch.awsutil.config
 
 import akka.Done
-import com.monsanto.arch.awsutil.config.model.{ConfigRule, PutRuleRequest}
+import com.monsanto.arch.awsutil.config.model.{ConfigRule, DescribeRulesRequest, PutRuleRequest}
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.testkit.ConfigScalaCheckImplicits._
@@ -40,6 +40,23 @@ class DefaultAsyncConfigClientSpec extends FreeSpec with MockFactory with Materi
 
         val result = async.deleteConfigRule(ruleName).futureValue
         result shouldBe Done
+      }
+    }
+
+    "list rules" in {
+      forAll(maxSize(20)) { rules: List[ConfigRule] ⇒
+        val streaming = mock[StreamingConfigClient]("streaming")
+        val async  = new DefaultAsyncConfigClient(streaming)
+
+        val names = rules.map(_.name.getOrElse("testName"))
+        val request = if (rules.isEmpty) DescribeRulesRequest.allRoles else DescribeRulesRequest(Some(names))
+
+        (streaming.ruleDescriber _)
+          .expects()
+          .returningConcatFlow(request,rules)
+
+        val result = async.describeConfigRules(names).futureValue
+        result shouldBe rules
       }
     }
   }

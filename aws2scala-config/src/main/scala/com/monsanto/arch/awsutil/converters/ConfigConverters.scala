@@ -2,6 +2,7 @@ package com.monsanto.arch.awsutil.converters
 
 import com.amazonaws.services.config.{model => aws}
 import com.monsanto.arch.awsutil.config.model._
+import com.monsanto.arch.awsutil.config.model.DescribeRulesRequest
 import collection.JavaConverters._
 import org.json4s.native.Json
 import org.json4s.DefaultFormats
@@ -44,6 +45,18 @@ object ConfigConverters {
 
   implicit class ScalaPutRuleRequest(val ruleRequest: PutRuleRequest) extends AnyVal {
     def asAws: aws.PutConfigRuleRequest = new aws.PutConfigRuleRequest().withConfigRule(ruleRequest.rule.asAws)
+  }
+
+  implicit class AwsDescribeRulesRequest(val request: aws.DescribeConfigRulesRequest) extends AnyVal {
+    def asScala: DescribeRulesRequest = DescribeRulesRequest(Option(request.getConfigRuleNames.asScala.toList))
+  }
+
+  implicit class ScalaDescribeRuleRequest(val request: DescribeRulesRequest) extends AnyVal {
+    def asAws: aws.DescribeConfigRulesRequest = {
+      val r = new aws.DescribeConfigRulesRequest()
+      request.names.foreach(ns => r.withConfigRuleNames(ns:_*))
+      r
+    }
   }
 
   implicit class AwsSource(val source: aws.Source) extends AnyVal {
