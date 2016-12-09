@@ -1,11 +1,12 @@
 package com.monsanto.arch.awsutil.config
 
 import akka.Done
-import com.monsanto.arch.awsutil.config.model.{ConfigRule, DescribeRulesRequest, PutRuleRequest}
+import com.monsanto.arch.awsutil.config.model.{ConfigRule, DescribeRulesRequest, PutRuleRequest, StartConfigRuleEvaluationRequest}
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.testkit.ConfigScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.CoreGen
+import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -57,6 +58,18 @@ class DefaultAsyncConfigClientSpec extends FreeSpec with MockFactory with Materi
 
         val result = async.describeConfigRules(names).futureValue
         result shouldBe rules
+      }
+    }
+
+    "start evaluations" in {
+      forAll(Gen.nonEmptyListOf(CoreGen.iamName), maxSize(25)) { ruleNames: List[String] =>
+        val streaming = mock[StreamingConfigClient]("streaming")
+        val async  = new DefaultAsyncConfigClient(streaming)
+
+        (streaming.evaluationStarter _).expects().returningFlow(StartConfigRuleEvaluationRequest(ruleNames), ruleNames)
+
+        val result = async.startEvaluations(ruleNames).futureValue
+        result shouldBe Done
       }
     }
   }

@@ -156,11 +156,51 @@ object LambdaConverters {
     }
   }
 
-  implicit class ScalaRemovePermissionRequest(val requset: RemovePermissionRequest) extends AnyVal {
+  implicit class ScalaRemovePermissionRequest(val request: RemovePermissionRequest) extends AnyVal {
     def asAws: aws.RemovePermissionRequest = {
       new aws.RemovePermissionRequest()
-        .withFunctionName(requset.functionName)
-        .withStatementId(requset.statementId)
+        .withFunctionName(request.functionName)
+        .withStatementId(request.statementId)
+    }
+  }
+
+  implicit class AwsFunctionConfiguration(val fc: aws.FunctionConfiguration) extends AnyVal {
+    def asScala: FunctionConfiguration = {
+      FunctionConfiguration(
+        FunctionArn.fromArnString(fc.getFunctionArn),
+        fc.getFunctionName,
+        toRuntime(fc.getRuntime),
+        fc.getHandler,
+        fc.getRole,
+        fc.getDescription,
+        fc.getTimeout,
+        fc.getLastModified,
+        fc.getMemorySize,
+        fc.getVersion,
+        fc.getCodeSha256
+      )
+    }
+  }
+
+  implicit class ScalaFunctionConfiguration(val fc: FunctionConfiguration) extends AnyVal {
+    def asAws: aws.FunctionConfiguration = {
+      new aws.FunctionConfiguration()
+        .withFunctionArn(fc.arn.arnString)
+        .withFunctionName(fc.name)
+        .withRuntime(fc.runtime.name)
+        .withHandler(fc.handler)
+        .withRole(fc.role)
+        .withDescription(fc.description)
+        .withTimeout(fc.timeout)
+        .withMemorySize(fc.memory)
+        .withLastModified(fc.lastModified)
+        .withCodeSha256(fc.codeHash)
+        .withVersion(fc.version)
+        .withVpcConfig(fc.vpcConfig.map { v =>
+          new aws.VpcConfigResponse()
+            .withSecurityGroupIds(v.securityGroupIds: _*)
+            .withSubnetIds(v.subnetIds: _*)
+        }.orNull)
     }
   }
 

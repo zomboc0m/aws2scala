@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.config
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.amazonaws.services.config.{AmazonConfigAsync, model => aws}
-import com.monsanto.arch.awsutil.config.model.{ConfigRule, DescribeRulesRequest, PutRuleRequest}
+import com.monsanto.arch.awsutil.config.model.{ConfigRule, DescribeRulesRequest, PutRuleRequest, StartConfigRuleEvaluationRequest}
 import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
 import com.monsanto.arch.awsutil.converters.ConfigConverters._
 
@@ -30,4 +30,11 @@ class DefaultStreamingConfigClient(config: AmazonConfigAsync) extends StreamingC
       .via[aws.DescribeConfigRulesResult, NotUsed](AWSFlow.pagedByNextToken(config.describeConfigRulesAsync))
       .mapConcat(_.getConfigRules.asScala.toList.map(_.asScala))
       .named("Config.ruleLister")
+
+  override val evaluationStarter =
+    Flow[StartConfigRuleEvaluationRequest]
+      .map(_.asAws)
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.StartConfigRulesEvaluationRequest, aws.StartConfigRulesEvaluationResult](config.startConfigRulesEvaluationAsync)))
+      .map(_.asScala.configRuleNames)
+      .named("Config.evaluationStarter")
 }

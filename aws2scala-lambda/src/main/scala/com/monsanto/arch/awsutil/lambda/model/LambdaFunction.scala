@@ -32,3 +32,19 @@ case class LambdaFunction(
                            codeHash: String = "",
                            vpcConfig: Option[VpcConfig] = None,
                            codeLocation: Option[CodeLocation] = None)
+
+
+case class FunctionConfiguration(
+                                  arn: FunctionArn,
+                                  name: String,
+                                  runtime: Runtime,
+                                  handler: String,
+                                  role: String,
+                                  description: String = "",
+                                  timeout: Int = 3,
+                                  lastModified: String = "",
+                                  memory: Int = 128,
+                                  version: String = "$LATEST",
+                                  codeHash: String = "",
+                                  vpcConfig: Option[VpcConfig] = None
+                                )

@@ -3,16 +3,18 @@ package com.monsanto.arch.awsutil.config
 import akka.stream.scaladsl.{Sink, Source}
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.config.{AmazonConfigAsync, model => aws}
-import com.monsanto.arch.awsutil.config.model.{ConfigRule, DescribeRulesRequest, PutRuleRequest}
+import com.monsanto.arch.awsutil.config.model.{ConfigRule, DescribeRulesRequest, PutRuleRequest, StartConfigRuleEvaluationRequest}
 import com.monsanto.arch.awsutil.converters.ConfigConverters._
 import com.monsanto.arch.awsutil.testkit.ConfigScalaCheckImplicits._
 import com.monsanto.arch.awsutil.test_support.{AwsMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.testkit.{ConfigGen, CoreGen}
+import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
+import scala.collection.JavaConverters._
 
 class DefaultStreamingConfigClientSpec extends FreeSpec with MockFactory with Materialised with AwsMockUtils {
   "the default StreamingConfigClient provides" - {
@@ -68,13 +70,14 @@ class DefaultStreamingConfigClientSpec extends FreeSpec with MockFactory with Ma
         pages.zipWithIndex.foreach { case (page, i) ⇒
           (config.describeConfigRulesAsync(_: aws.DescribeConfigRulesRequest, _: AsyncHandler[aws.DescribeConfigRulesRequest, aws.DescribeConfigRulesResult]))
             .expects(whereRequest { r ⇒
-                val token = if (i == 0) null else i.toString
-                r should have(
-                  'nextToken (token)
-                )
-               true})
+              val token = if (i == 0) null else i.toString
+              r should have(
+                'nextToken (token)
+              )
+              true
+            })
             .withAwsSuccess {
-              val result = new aws.DescribeConfigRulesResult().withConfigRules(page:_*)
+              val result = new aws.DescribeConfigRulesResult().withConfigRules(page: _*)
               val next = i + 1
               if (next != pages.size) result.setNextToken(next.toString)
               result
@@ -85,6 +88,23 @@ class DefaultStreamingConfigClientSpec extends FreeSpec with MockFactory with Ma
 
         result shouldBe rules
 
+      }
+    }
+
+    "an evaluation starter" in {
+      forAll(Gen.nonEmptyListOf(CoreGen.iamName), maxSize(25)) { ruleNames: List[String] =>
+        val config = mock[AmazonConfigAsync]("config")
+        val streaming = new DefaultStreamingConfigClient(config)
+
+        (config.startConfigRulesEvaluationAsync(_: aws.StartConfigRulesEvaluationRequest, _: AsyncHandler[aws.StartConfigRulesEvaluationRequest, aws.StartConfigRulesEvaluationResult]))
+          .expects(whereRequest { r ⇒
+            r.getConfigRuleNames shouldBe ruleNames.asJava
+            true
+          })
+          .withVoidAwsSuccess()
+
+        val result = Source.single(StartConfigRuleEvaluationRequest(ruleNames)).via(streaming.evaluationStarter).runWith(Sink.head  ).futureValue
+        result shouldBe ruleNames
       }
     }
   }

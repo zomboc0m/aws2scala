@@ -2,7 +2,7 @@ package com.monsanto.arch.awsutil.config
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
-import com.monsanto.arch.awsutil.config.model.{ConfigRule, DescribeRulesRequest, PutRuleRequest}
+import com.monsanto.arch.awsutil.config.model.{ConfigRule, DescribeRulesRequest, PutRuleRequest, StartConfigRuleEvaluationRequest}
 
 class DefaultAsyncConfigClient(streaming: StreamingConfigClient) extends AsyncConfigClient {
   override def putConfigRule(rule: ConfigRule)(implicit m: Materializer) =
@@ -19,4 +19,9 @@ class DefaultAsyncConfigClient(streaming: StreamingConfigClient) extends AsyncCo
     Source.single(if (names.isEmpty) DescribeRulesRequest.allRoles else DescribeRulesRequest(Option(names)))
       .via(streaming.ruleDescriber)
       .runWith(Sink.seq)
+
+  override def startEvaluations(ruleNames: Seq[String])(implicit m: Materializer) =
+    Source.single(StartConfigRuleEvaluationRequest(ruleNames))
+      .via(streaming.evaluationStarter)
+      .runWith(Sink.ignore)
 }

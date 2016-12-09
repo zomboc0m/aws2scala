@@ -54,7 +54,7 @@ object ConfigConverters {
   implicit class ScalaDescribeRuleRequest(val request: DescribeRulesRequest) extends AnyVal {
     def asAws: aws.DescribeConfigRulesRequest = {
       val r = new aws.DescribeConfigRulesRequest()
-      request.names.foreach(ns => r.withConfigRuleNames(ns:_*))
+      request.names.foreach(ns => r.withConfigRuleNames(ns: _*))
       r
     }
   }
@@ -170,6 +170,15 @@ object ConfigConverters {
 
   implicit class ScalaResourceType(val resource: ResourceType) extends AnyVal {
     def asAws: aws.ResourceType = aws.ResourceType.fromValue(resource.toString)
+  }
+
+  implicit class AwsStartConfigRuleEvaluationRequest(val request: aws.StartConfigRulesEvaluationRequest) extends AnyVal {
+    def asScala: StartConfigRuleEvaluationRequest = StartConfigRuleEvaluationRequest(request.getConfigRuleNames.asScala.toList)
+  }
+
+  implicit class ScalaStartConfigRuleEvaluationRequest(val request: StartConfigRuleEvaluationRequest) extends AnyVal {
+    def asAws: aws.StartConfigRulesEvaluationRequest =
+      new aws.StartConfigRulesEvaluationRequest().withConfigRuleNames(request.configRuleNames: _*)
   }
 
 }
