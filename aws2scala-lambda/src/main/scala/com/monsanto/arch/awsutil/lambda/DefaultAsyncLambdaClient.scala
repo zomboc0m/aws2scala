@@ -4,13 +4,14 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import com.monsanto.arch.awsutil.{Account, Arn}
 import com.monsanto.arch.awsutil.auth.policy.{Action, Principal}
+import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
 import com.monsanto.arch.awsutil.lambda.model.{CreateFunctionRequest, _}
 
 private[awsutil] class DefaultAsyncLambdaClient(streaming: StreamingLambdaClient) extends AsyncLambdaClient {
-  override def createFunction(pathToCode: String, name: String, handler: String, role: String, runtime: Runtime)(implicit m: Materializer) =
+  override def createFunction(pathToCode: String, name: String, handler: String, role: RoleArn, runtime: Runtime)(implicit m: Materializer) =
     createFunction(CreateFunctionRequest(FunctionCode.fromZipFile(pathToCode), name, handler, runtime, role))
 
-  override def createFunction(code: FunctionCode, name: String, handler: String, role: String, runtime: Runtime)(implicit m: Materializer) =
+  override def createFunction(code: FunctionCode, name: String, handler: String, role: RoleArn, runtime: Runtime)(implicit m: Materializer) =
     createFunction(CreateFunctionRequest(code, name, handler, runtime, role))
 
   override def createFunction(request: CreateFunctionRequest)(implicit m: Materializer) =

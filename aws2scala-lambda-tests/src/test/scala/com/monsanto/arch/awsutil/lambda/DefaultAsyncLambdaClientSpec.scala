@@ -3,10 +3,10 @@ package com.monsanto.arch.awsutil.lambda
 import java.nio.file.Files
 
 import akka.Done
-import com.amazonaws.services.lambda.AWSLambdaAsync
 import com.monsanto.arch.awsutil.{Account, Arn}
 import com.monsanto.arch.awsutil.auth.policy.{Policy, Principal}
 import com.monsanto.arch.awsutil.auth.policy.action.LambdaAction
+import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
 import com.monsanto.arch.awsutil.lambda.model._
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
 import com.monsanto.arch.awsutil.test_support.Samplers.EnhancedGen
@@ -29,23 +29,23 @@ class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMo
           CoreGen.iamName → "functionName",
           arbitrary[Array[Byte]] → "zipData",
           UtilGen.stringOf(UtilGen.asciiChar, 1, 30) → "handler",
-          CoreGen.iamName → "roleName",
+          arbitrary[RoleArn] → "role",
           arbitrary[com.monsanto.arch.awsutil.lambda.model.Runtime] → "runtime"
-        ) { (functionName, zipData, handler, roleName, runtime) =>
+        ) { (functionName, zipData, handler, role, runtime) =>
           val streaming = mock[StreamingLambdaClient]
           val async = new DefaultAsyncLambdaClient(streaming)
 
           val zipPath = Files.write(Files.createTempFile("tmptestlambda", ".zip"), zipData)
           zipPath.toFile.deleteOnExit()
 
-          val request = CreateFunctionRequest(FunctionCode.fromZipFile(zipPath.toAbsolutePath.toString), functionName, handler, runtime, roleName)
+          val request = CreateFunctionRequest(FunctionCode.fromZipFile(zipPath.toAbsolutePath.toString), functionName, handler, runtime, role)
           val function = LambdaGen.createdFunction(request).reallySample
 
           (streaming.functionCreator _).
             expects().
             returningFlow(request, function)
 
-          val result = async.createFunction(zipPath.toAbsolutePath.toString, functionName, handler, roleName, runtime).futureValue
+          val result = async.createFunction(zipPath.toAbsolutePath.toString, functionName, handler, role, runtime).futureValue
           result shouldBe function
         }
       }
@@ -55,21 +55,21 @@ class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMo
           CoreGen.iamName → "functionName",
           arbitrary[FunctionCode] → "functionCode",
           UtilGen.stringOf(UtilGen.asciiChar, 1, 30) → "handler",
-          CoreGen.iamName → "roleName",
+          arbitrary[RoleArn] → "role",
           arbitrary[com.monsanto.arch.awsutil.lambda.model.Runtime] → "runtime"
-        ) { (functionName, functionCode, handler, roleName, runtime) =>
+        ) { (functionName, functionCode, handler, role, runtime) =>
 
           val streaming = mock[StreamingLambdaClient]("streaming")
           val async = new DefaultAsyncLambdaClient(streaming)
 
-          val request = CreateFunctionRequest(functionCode, functionName, handler, runtime, roleName)
+          val request = CreateFunctionRequest(functionCode, functionName, handler, runtime, role)
           val function = LambdaGen.createdFunction(request).reallySample
 
           (streaming.functionCreator _).
             expects().
             returningFlow(request, function)
 
-          val result = async.createFunction(functionCode, functionName, handler, roleName, runtime).futureValue
+          val result = async.createFunction(functionCode, functionName, handler, role, runtime).futureValue
           result shouldBe function
         }
       }
@@ -107,33 +107,33 @@ class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMo
 
     "get a lambda function" - {
       "specified by name" in {
-        forAll { (function: LambdaFunction) ⇒
+        forAll { (function: GetFunctionResult) ⇒
           val streaming = mock[StreamingLambdaClient]("streaming")
           val async = new DefaultAsyncLambdaClient(streaming)
 
-          val request = GetFunctionRequest(function.name)
+          val request = GetFunctionRequest(function.configuration.name)
 
           (streaming.functionGetter _)
             .expects()
             .returningFlow(request, function)
 
-          val result = async.getFunction(function.name).futureValue
+          val result = async.getFunction(function.configuration.name).futureValue
           result shouldBe function
         }
       }
 
       "specified by ARN" in {
-        forAll { (function: LambdaFunction) ⇒
+        forAll { (function: GetFunctionResult) ⇒
           val streaming = mock[StreamingLambdaClient]("streaming")
           val async = new DefaultAsyncLambdaClient(streaming)
 
-          val request = GetFunctionRequest(function.arn.arnString)
+          val request = GetFunctionRequest(function.configuration.arn.arnString)
 
           (streaming.functionGetter _)
             .expects()
             .returningFlow(request, function)
 
-          val result = async.getFunction(function.arn).futureValue
+          val result = async.getFunction(function.configuration.arn).futureValue
           result shouldBe function
         }
       }
@@ -147,10 +147,10 @@ class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMo
           Gen.oneOf(LambdaAction.values) → "action"
         ) { (id, functionName, principal, action) =>
           val streaming = mock[StreamingLambdaClient]("streaming")
-          val async = new DefaultAsyncLambdaClient((streaming))
+          val async = new DefaultAsyncLambdaClient(streaming)
 
           val request = AddPermissionRequest(id, functionName, principal, action)
-          val createdPolicyStatement = LambdaGen.policyFor(request).statements(0)
+          val createdPolicyStatement = LambdaGen.policyFor(request).statements.head
 
           (streaming.permissionAdder _)
             .expects()
@@ -171,10 +171,10 @@ class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMo
           arbitrary[Account] → "sourceAccount"
         ) { (id, functionName, principal, action, sourceArn, sourceAccount) =>
           val streaming = mock[StreamingLambdaClient]("streaming")
-          val async = new DefaultAsyncLambdaClient((streaming))
+          val async = new DefaultAsyncLambdaClient(streaming)
 
           val request = AddPermissionRequest(id, functionName, principal, action, Some(sourceArn.arnString), Some(sourceAccount.id))
-          val createdPolicyStatement = LambdaGen.policyFor(request).statements(0)
+          val createdPolicyStatement = LambdaGen.policyFor(request).statements.head
 
           (streaming.permissionAdder _)
             .expects()

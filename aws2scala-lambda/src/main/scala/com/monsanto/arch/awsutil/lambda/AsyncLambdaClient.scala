@@ -4,6 +4,7 @@ import akka.Done
 import akka.stream.Materializer
 import com.monsanto.arch.awsutil.{Account, Arn, AsyncAwsClient}
 import com.monsanto.arch.awsutil.auth.policy.{Action, Policy, Principal, Statement}
+import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
 import com.monsanto.arch.awsutil.lambda.model._
 
 import scala.concurrent.Future
@@ -17,7 +18,7 @@ trait AsyncLambdaClient extends AsyncAwsClient {
     * @param role       the arn of the role Lambda will assume
     * @param runtime    the runtime environment the function will use when invoked
     * */
-  def createFunction(pathToCode: String, name: String, handler: String, role: String, runtime: Runtime)(implicit m: Materializer): Future[LambdaFunction]
+  def createFunction(pathToCode: String, name: String, handler: String, role: RoleArn, runtime: Runtime)(implicit m: Materializer): Future[CreateFunctionResult]
 
   /** Creates a new lambda function using only the required parameters.  This version requires the user to specify the location of the code.  Use this version
     * if your code is in an S3 bucket
@@ -28,24 +29,24 @@ trait AsyncLambdaClient extends AsyncAwsClient {
     * @param role    the arn of the role Lambda will assume
     * @param runtime the runtime environment the function will use when invoked
     * */
-  def createFunction(code: FunctionCode, name: String, handler: String, role: String, runtime: Runtime)(implicit m: Materializer): Future[LambdaFunction]
+  def createFunction(code: FunctionCode, name: String, handler: String, role: RoleArn, runtime: Runtime)(implicit m: Materializer): Future[CreateFunctionResult]
 
   /** Creates a new lambda function. Use this version to specify custom optional parameters.  See [[com.monsanto.arch.awsutil.lambda.model.CreateFunctionRequest#apply]] for what parameters are available
     *
     * @param request a request to aws to create a new lambda function
     * */
-  def createFunction(request: CreateFunctionRequest)(implicit m: Materializer): Future[LambdaFunction]
+  def createFunction(request: CreateFunctionRequest)(implicit m: Materializer): Future[CreateFunctionResult]
 
   /** Deletes the function with the given name */
   def deleteFunction(name: String)(implicit m: Materializer): Future[Done]
 
   /** Retrieves information about a lambda function based on its name
     * */
-  def getFunction(functionName: String)(implicit m: Materializer): Future[LambdaFunction]
+  def getFunction(functionName: String)(implicit m: Materializer): Future[GetFunctionResult]
 
   /** Retrieves information about a lambda function based on its ARN
     * */
-  def getFunction(functionArn: FunctionArn)(implicit m: Materializer): Future[LambdaFunction]
+  def getFunction(functionArn: FunctionArn)(implicit m: Materializer): Future[GetFunctionResult]
 
   /** Adds a permission to a lambda function to allow an aws principal to use it
     *

@@ -1,5 +1,7 @@
 package com.monsanto.arch.awsutil.lambda.model
 
+import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
+
 /**
   * CreateFunctionRequest represents a request to aws to create a new lambda function
   *
@@ -18,10 +20,10 @@ case class CreateFunctionRequest(code: FunctionCode,
                                  name: String,
                                  handler: String,
                                  runtime: Runtime,
-                                 role: String,
-                                 description: String = "",
-                                 memory: Int = 128,
-                                 publish: Boolean = false,
-                                 timeout: Int = 3,
+                                 role: RoleArn,
+                                 description: Option[String] = None,
+                                 memory: Option[Int] = None,
+                                 publish: Option[Boolean] = None,
+                                 timeout: Option[Int] = None,
                                  vpcConfig: Option[VpcConfig] = None
                                 )

@@ -63,11 +63,11 @@ class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Ma
     }
 
     "a function getter" in {
-      forAll { function: LambdaFunction ⇒
+      forAll { function: GetFunctionResult ⇒
         val lambda = mock[AWSLambdaAsync]("lambda")
         val streaming = new DefaultStreamingLambdaClient(lambda)
 
-        val request = GetFunctionRequest(function.name)
+        val request = GetFunctionRequest(function.configuration.name)
 
         (lambda.getFunctionAsync(_: aws.GetFunctionRequest, _: AsyncHandler[aws.GetFunctionRequest, aws.GetFunctionResult]))
           .expects(whereRequest { r ⇒
@@ -98,7 +98,7 @@ class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Ma
           val generator = jsonFactory.createGenerator(jsonWriter)
           generator.writeStartObject()
           generator.writeFieldName("Statement")
-          PolicyJsonSupport.statementToJson(generator, p.statements(0))
+          PolicyJsonSupport.statementToJson(generator, p.statements.head)
           generator.writeEndObject()
           generator.flush
           jsonWriter.toString
@@ -122,7 +122,7 @@ class DefaultStreamingLambdaClientSpec extends FreeSpec with MockFactory with Ma
           .withAwsSuccess(new aws.AddPermissionResult().withStatement(extractStatement(createdPolicy)))
 
         val result = Source.single(request).via(streaming.permissionAdder).runWith(Sink.head).futureValue
-        result shouldBe createdPolicy.statements(0)
+        result shouldBe createdPolicy.statements.head
       }
     }
 

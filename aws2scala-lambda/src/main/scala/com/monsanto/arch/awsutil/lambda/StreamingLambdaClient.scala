@@ -8,13 +8,13 @@ import com.monsanto.arch.awsutil.lambda.model._
 
 trait StreamingLambdaClient extends StreamingAwsClient {
   /** Returns a flow that creates a lambda function and emits the new function */
-  def functionCreator: Flow[CreateFunctionRequest, LambdaFunction, NotUsed]
+  def functionCreator: Flow[CreateFunctionRequest, CreateFunctionResult, NotUsed]
 
   /** Returns a flow that given a function name will delete the function. */
   def functionDeleter: Flow[String, String, NotUsed]
 
   /** Returns a flow that, given a request to retrieve a lambda function, emits the requested function */
-  def functionGetter: Flow[GetFunctionRequest, LambdaFunction, NotUsed]
+  def functionGetter: Flow[GetFunctionRequest, GetFunctionResult, NotUsed]
 
   /** Returns a flow that adds a permission to an existing lambda function and emits the newly attached statement */
   def permissionAdder: Flow[AddPermissionRequest, Statement, NotUsed]

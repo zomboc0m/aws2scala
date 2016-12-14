@@ -1,13 +1,15 @@
 package com.monsanto.arch.awsutil.testkit
 
 import com.amazonaws.services.lambda.{model => aws}
-import com.monsanto.arch.awsutil.{Account, Arn}
+import com.monsanto.arch.awsutil.Account
 import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
-import com.monsanto.arch.awsutil.lambda.model.{AddPermissionRequest, CreateFunctionRequest, FunctionArn, LambdaFunction}
+import com.monsanto.arch.awsutil.lambda.model._
+import com.monsanto.arch.awsutil.converters.LambdaConverters.ScalaVpcConfigResponse
 import com.monsanto.arch.awsutil.regions.Region
 import com.monsanto.arch.awsutil.testkit.UtilGen._
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.LambdaScalaCheckImplicits.arbVpcConfigResponse
 import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary
 
@@ -35,7 +37,7 @@ object LambdaGen {
       s"""$year-$month-${day}T$hour:$minute:$second.$fracsec+0000"""
     }
 
-  def createFunctionResultFor(function: LambdaFunction): aws.CreateFunctionResult = {
+  def createFunctionResultFor(function: CreateFunctionResult): aws.CreateFunctionResult = {
     new aws.CreateFunctionResult()
       .withCodeSha256(function.codeHash)
       .withDescription(function.description)
@@ -48,36 +50,32 @@ object LambdaGen {
       .withRuntime(function.runtime.toString)
       .withTimeout(function.timeout)
       .withVersion(function.version)
-      .withVpcConfig(function.vpcConfig.map { vpc =>
-        new aws.VpcConfigResponse()
-          .withSecurityGroupIds(vpc.securityGroupIds: _*)
-          .withSubnetIds(vpc.subnetIds: _*)
-      }.orNull)
+      .withVpcConfig(function.vpcConfig.asAws)
   }
 
-  def createdFunction(request: CreateFunctionRequest): Gen[LambdaFunction] = {
+  def createdFunction(request: CreateFunctionRequest): Gen[CreateFunctionResult] = {
     for {
       region <- arbitrary[Region]
       account <- arbitrary[Account]
       date <- awsTimestamp
       version <- versionNum
       hash <- UtilGen.stringOf(UtilGen.extendedWordChar, 1, 30)
+      vpc <- arbitrary[VpcConfigResponse]
     } yield {
       val functionArn = FunctionArn(region, account, request.name)
-      LambdaFunction(
+      CreateFunctionResult(
         functionArn,
         request.name,
         request.runtime,
         request.handler,
-        request.role,
-        request.description,
-        request.timeout,
+        request.role.arnString,
+        request.description.getOrElse(""),
+        request.timeout.getOrElse(3),
         date,
-        request.memory,
+        request.memory.getOrElse(128),
         version,
         hash,
-        request.vpcConfig,
-        None)
+        vpc)
     }
   }
 
