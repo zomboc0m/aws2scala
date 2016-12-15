@@ -37,8 +37,8 @@ private[awsutil] class DefaultAsyncLambdaClient(streaming: StreamingLambdaClient
       .via(streaming.permissionAdder)
       .runWith(Sink.head)
 
-  override def addPermission(statementId: String, functionName: String, principal: Principal, action: Action, sourceArn: Arn, sourceAccount: Account)(implicit m: Materializer) =
-    Source.single(AddPermissionRequest(statementId, functionName, principal, action, Some(sourceArn.arnString), Some(sourceAccount.id)))
+  override def addPermission(statementId: String, functionName: String, principal: Principal, action: Action, sourceArn: Arn, sourceAccount: String)(implicit m: Materializer) =
+    Source.single(AddPermissionRequest(statementId, functionName, principal, action, Option(sourceArn), Option(sourceAccount)))
       .via(streaming.permissionAdder)
       .runWith(Sink.head)
 

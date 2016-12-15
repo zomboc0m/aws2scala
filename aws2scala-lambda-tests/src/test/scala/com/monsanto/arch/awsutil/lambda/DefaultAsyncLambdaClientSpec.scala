@@ -168,12 +168,12 @@ class DefaultAsyncLambdaClientSpec extends FreeSpec with MockFactory with FlowMo
           arbitrary[Principal] → "principal",
           Gen.oneOf(LambdaAction.values) → "action",
           arbitrary[Arn] → "sourceArn",
-          arbitrary[Account] → "sourceAccount"
+          CoreGen.accountId → "sourceAccount"
         ) { (id, functionName, principal, action, sourceArn, sourceAccount) =>
           val streaming = mock[StreamingLambdaClient]("streaming")
           val async = new DefaultAsyncLambdaClient(streaming)
 
-          val request = AddPermissionRequest(id, functionName, principal, action, Some(sourceArn.arnString), Some(sourceAccount.id))
+          val request = AddPermissionRequest(id, functionName, principal, action, Option(sourceArn), Option(sourceAccount))
           val createdPolicyStatement = LambdaGen.policyFor(request).statements.head
 
           (streaming.permissionAdder _)

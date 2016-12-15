@@ -2,8 +2,11 @@ package com.monsanto.arch.awsutil.converters
 
 import collection.JavaConverters._
 import com.amazonaws.services.lambda.{model => aws}
+import com.monsanto.arch.awsutil.{Account, Arn}
 import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
 import com.monsanto.arch.awsutil.lambda.model._
+import com.monsanto.arch.awsutil.auth.policy.{Action, Principal}
+import com.monsanto.arch.awsutil.auth.policy.Principal.Service
 
 /** Utility for converting ''aws2scala-lambda'' objects to/from their AWS counterparts. */
 object LambdaConverters {
@@ -114,6 +117,21 @@ object LambdaConverters {
     }
   }
 
+  implicit class AwsAddPermissionRequest(val request: aws.AddPermissionRequest) extends AnyVal {
+    def asScala: AddPermissionRequest = {
+      def p = Arn.fromArnString.unapply(request.getPrincipal).flatMap(_.accountOption).map(Principal.account)
+      def s = Service.fromId.unapply(request.getPrincipal).map(Principal.service)
+      AddPermissionRequest(
+        request.getStatementId,
+        request.getFunctionName,
+        s getOrElse p.get,
+        Action.fromName(request.getAction),
+        Arn.fromArnString.unapply(request.getSourceArn),
+        Option(request.getSourceAccount)
+      )
+    }
+  }
+
 
   implicit class ScalaAddPermissionRequest(val request: AddPermissionRequest) extends AnyVal {
     def asAws: aws.AddPermissionRequest = {
@@ -122,7 +140,7 @@ object LambdaConverters {
         .withFunctionName(request.functionName)
         .withPrincipal(request.principal.id)
         .withSourceAccount(request.sourceAccount.orNull)
-        .withSourceArn(request.sourceArn.orNull)
+        .withSourceArn(request.sourceArn.map(_.arnString).orNull)
         .withStatementId(request.statementId)
     }
   }

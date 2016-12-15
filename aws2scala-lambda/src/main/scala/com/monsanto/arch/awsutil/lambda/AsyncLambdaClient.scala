@@ -72,7 +72,7 @@ trait AsyncLambdaClient extends AsyncAwsClient {
     *                      is covered when an account is specified as the principal. However, if a service, such as S3, is
     *                      the principal, this parameter can be used to further restrict permission
     * */
-  def addPermission(statementId: String, functionName: String, principal: Principal, action: Action, sourceArn: Arn, sourceAccount: Account)(implicit m: Materializer): Future[Statement]
+  def addPermission(statementId: String, functionName: String, principal: Principal, action: Action, sourceArn: Arn, sourceAccount: String)(implicit m: Materializer): Future[Statement]
 
   /** Removes a permission from a lambda function
     *

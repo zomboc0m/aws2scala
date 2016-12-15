@@ -2,6 +2,8 @@ package com.monsanto.arch.awsutil.testkit
 
 import java.nio.ByteBuffer
 
+import com.monsanto.arch.awsutil.auth.policy.{Action, Principal, Resource}
+import com.monsanto.arch.awsutil.auth.policy.action.LambdaAction
 import com.monsanto.arch.awsutil.{Account, Arn}
 import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
 import com.monsanto.arch.awsutil.lambda.Lambda
@@ -178,5 +180,18 @@ object LambdaScalaCheckImplicits {
         config <- arbitrary[VpcConfig]
         vpcId <- Gen.option(UtilGen.nonEmptyString)
       } yield VpcConfigResponse(config.securityGroupIds,config.subnetIds,vpcId)
+    }
+
+  implicit lazy val arbAddPermissionRequest: Arbitrary[AddPermissionRequest] =
+    Arbitrary {
+      for {
+        sId <- UtilGen.stringOf(UtilGen.wordChar,1,100)
+        name <- LambdaGen.functionName
+        principal <- Gen.oneOf(arbitrary[Principal.ServicePrincipal],arbitrary[Principal.AccountPrincipal])
+        action <- Gen.oneOf(LambdaAction.values)
+        r <- arbitrary[Resource]
+        sourceArn = Option(Arn.fromArnString(r.id))
+        sourceAccount <- Gen.option(CoreGen.accountId)
+      } yield AddPermissionRequest(sId,name,principal,action,sourceArn,sourceAccount)
     }
 }
