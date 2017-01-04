@@ -121,4 +121,11 @@ object ConfigScalaCheckImplicits {
         sid <- Gen.option(arbitrary[SourceIdentifier])
       } yield Source(owner, details, sid)
     }
+
+  implicit lazy val arbDescribeRulesRequest: Arbitrary[DescribeRulesRequest] =
+    Arbitrary {
+      for {
+        names <- Gen.option(Gen.nonEmptyListOf(arbitrary[String]))
+      } yield DescribeRulesRequest(names)
+    }
 }

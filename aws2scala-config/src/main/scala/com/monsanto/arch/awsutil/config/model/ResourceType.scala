@@ -4,8 +4,9 @@ package com.monsanto.arch.awsutil.config.model
   * A ResourceType represents the kinds of resources whose changes can trigger an
   * evaluation of the config rule
   */
-sealed abstract class ResourceType(val service: String, val name: String) {
-  override def toString = s"AWS::$service::$name"
+sealed abstract class ResourceType(val service: String, val resource: String) {
+  override def toString = s"AWS::$service::$resource"
+  def name = toString
 }
 
 object ResourceType {
@@ -70,12 +71,14 @@ object ResourceType {
     AWSIAMGroup, AWSIAMPolicy, AWSIAMRole, AWSIAMUser, AWSRDSDBInstance, AWSRDSDBSecurityGroup,
     AWSRDSDBSnapshot, AWSRDSDBSubnetGroup, AWSRDSEventSubscription
   )
+
+
   def apply(str: String): ResourceType =
     unapply(str).getOrElse(throw new IllegalArgumentException(s"‘$str’ is not a valid resource type name."))
 
   def unapply(str: String): Option[ResourceType] =
-    values.find(r => r.name == str || r.toString == str)
+    values.find(_.toString == str)
 
-  val resourceTypeRegex = "AWS::\\w+::(\\w+)".r("name")
+  val resourceTypeRegex = "AWS::\\w+::(\\w+)".r("resource")
 
 }

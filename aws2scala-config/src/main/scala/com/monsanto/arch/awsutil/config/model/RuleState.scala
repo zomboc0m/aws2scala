@@ -16,7 +16,7 @@ object RuleState {
 
   case object Evaluating extends RuleState("EVALUATING")
 
-  val values = Seq(Active, Deleting, DeletingResults, Evaluating)
+  val values: Seq[RuleState] = Seq(Active, Deleting, DeletingResults, Evaluating)
 
   def apply(str: String): RuleState = unapply(str).getOrElse(throw new IllegalArgumentException(s"‘$str’ is not a valid rule state."))
 

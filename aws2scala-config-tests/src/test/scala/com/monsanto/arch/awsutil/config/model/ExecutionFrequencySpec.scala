@@ -2,25 +2,45 @@ package com.monsanto.arch.awsutil.config.model
 
 import com.amazonaws.services.config.{model => aws}
 import com.monsanto.arch.awsutil.converters.ConfigConverters._
-import com.monsanto.arch.awsutil.testkit.ConfigScalaCheckImplicits._
-import org.scalacheck.Gen
+import org.scalatest.prop.TableDrivenPropertyChecks._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class ExecutionFrequencySpec extends FreeSpec {
-  "an ExecutionFrequency can be round-tripped" - {
-    "from its AWS equivalent" in {
-      forAll(Gen.oneOf(ExecutionFrequency.values.map(_.name))) { name ⇒
-        val e = aws.MaximumExecutionFrequency.fromValue(name)
+  val frequencies = Table("Execution Frequencies", ExecutionFrequency.values: _*)
 
-        e.asScala.asAws shouldBe e
+  "an ExecutionFrequency" - {
+    "can be round-tripped" - {
+      "from its AWS equivalent" in {
+        forAll(frequencies) { ef ⇒
+          val e = aws.MaximumExecutionFrequency.fromValue(ef.name)
+
+          e.asScala.asAws shouldBe e
+        }
+      }
+
+      "via its AWS equivalent" in {
+        forAll(frequencies) { ef ⇒
+          ef.asAws.asScala shouldBe ef
+        }
       }
     }
 
-    "via its AWS equivalent" in {
-      forAll { e: ExecutionFrequency ⇒
-        e.asAws.asScala shouldBe e
+    "has a toString that matches the ID" in {
+      forAll(frequencies) { ef ⇒
+        ef.toString shouldBe ef.name
+      }
+    }
+
+    "can be round-tripped via its string representation" in {
+      forAll(frequencies) { ef ⇒
+        ExecutionFrequency.unapply(ef.name) shouldBe Some(ef)
+      }
+    }
+
+    "can be arbitrarily generated" in {
+      forAll(frequencies) { ef ⇒
+        ExecutionFrequency.values.contains(ef)
       }
     }
   }

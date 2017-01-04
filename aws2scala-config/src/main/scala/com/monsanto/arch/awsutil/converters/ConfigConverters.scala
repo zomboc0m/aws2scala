@@ -48,7 +48,7 @@ object ConfigConverters {
   }
 
   implicit class AwsDescribeRulesRequest(val request: aws.DescribeConfigRulesRequest) extends AnyVal {
-    def asScala: DescribeRulesRequest = DescribeRulesRequest(Option(request.getConfigRuleNames.asScala.toList))
+    def asScala: DescribeRulesRequest = DescribeRulesRequest(Option(request.getConfigRuleNames).filterNot(_.isEmpty).map(_.asScala.toList))
   }
 
   implicit class ScalaDescribeRuleRequest(val request: DescribeRulesRequest) extends AnyVal {

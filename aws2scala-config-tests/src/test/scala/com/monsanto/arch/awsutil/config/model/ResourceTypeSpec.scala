@@ -2,25 +2,45 @@ package com.monsanto.arch.awsutil.config.model
 
 import com.amazonaws.services.config.{model => aws}
 import com.monsanto.arch.awsutil.converters.ConfigConverters._
-import com.monsanto.arch.awsutil.testkit.ConfigScalaCheckImplicits._
-import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks._
+import org.scalatest.prop.TableDrivenPropertyChecks._
 
 class ResourceTypeSpec extends FreeSpec {
-  "a ResourceType can be round-tripped" - {
-    "from its AWS equivalent" in {
-      forAll(Gen.oneOf(ResourceType.values.map(_.toString))) { name ⇒
-        val rt = aws.ResourceType.fromValue(name)
+  val resourceTypes = Table("Resource Types", ResourceType.values: _*)
 
-        rt.asScala.asAws shouldBe rt
+  "a ResourceType" - {
+    "can be round-tripped" - {
+      "from its AWS equivalent" in {
+        forAll(resourceTypes) { rt ⇒
+          val awsRT = aws.ResourceType.fromValue(rt.toString)
+
+          awsRT.asScala.asAws shouldBe awsRT
+        }
+      }
+
+      "via its AWS equivalent" in {
+        forAll(resourceTypes) { rt ⇒
+          rt.asAws.asScala shouldBe rt
+        }
       }
     }
 
-    "via its AWS equivalent" in {
-      forAll { rt: ResourceType ⇒
-        rt.asAws.asScala shouldBe rt
+    "has a toString that matches the ID" in {
+      forAll(resourceTypes) { rt ⇒
+        rt.toString shouldBe rt.name
+      }
+    }
+
+    "can be round-tripped via its string representation" in {
+      forAll(resourceTypes) { rt ⇒
+        ResourceType.unapply(rt.name) shouldBe Some(rt)
+      }
+    }
+
+    "can be arbitrarily generated" in {
+      forAll(resourceTypes) { rt ⇒
+        ResourceType.values.contains(rt)
       }
     }
   }
