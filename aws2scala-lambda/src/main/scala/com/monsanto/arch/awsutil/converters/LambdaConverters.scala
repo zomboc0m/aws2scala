@@ -31,10 +31,10 @@ object LambdaConverters {
         toRuntime(request.getRuntime),
         RoleArn.fromArnString(request.getRole),
         Option(request.getDescription),
-        Option(request.getMemorySize.intValue),
-        Option(request.getPublish.booleanValue),
-        Option(request.getTimeout.intValue),
-        Option(request.getVpcConfig.asScala)
+        Option(request.getMemorySize).map(_.intValue),
+        Option(request.getPublish).map(_.booleanValue),
+        Option(request.getTimeout).map(_.intValue),
+        Option(request.getVpcConfig).map(_.asScala)
       )
   }
 
@@ -71,10 +71,10 @@ object LambdaConverters {
   implicit class AwsFunctionCode(val code: aws.FunctionCode) extends AnyVal {
     def asScala: FunctionCode =
       FunctionCode(
-        Some(code.getS3Bucket),
-        Some(code.getS3Key),
-        Some(code.getS3ObjectVersion),
-        Some(code.getZipFile)
+        Option(code.getS3Bucket),
+        Option(code.getS3Key),
+        Option(code.getS3ObjectVersion),
+        Option(code.getZipFile)
       )
   }
 
@@ -117,6 +117,24 @@ object LambdaConverters {
     }
   }
 
+  implicit class ScalaCreateFunctionResult(val result: CreateFunctionResult) extends AnyVal {
+    def asAws: aws.CreateFunctionResult = {
+      new aws.CreateFunctionResult()
+        .withCodeSha256(result.codeHash)
+        .withDescription(result.description)
+        .withFunctionArn(result.arn.arnString)
+        .withFunctionName(result.name)
+        .withHandler(result.handler)
+        .withLastModified(result.lastModified)
+        .withMemorySize(result.memory)
+        .withRole(result.role)
+        .withRuntime(result.runtime.name)
+        .withTimeout(result.timeout)
+        .withVersion(result.version)
+        .withVpcConfig(result.vpcConfig.asAws)
+    }
+  }
+
   implicit class AwsAddPermissionRequest(val request: aws.AddPermissionRequest) extends AnyVal {
     def asScala: AddPermissionRequest = {
       def p = Arn.fromArnString.unapply(request.getPrincipal).flatMap(_.accountOption).map(Principal.account)
@@ -142,6 +160,12 @@ object LambdaConverters {
         .withSourceAccount(request.sourceAccount.orNull)
         .withSourceArn(request.sourceArn.map(_.arnString).orNull)
         .withStatementId(request.statementId)
+    }
+  }
+
+  implicit class AwsRemovePermissionRequest(val request: aws.RemovePermissionRequest) extends AnyVal {
+    def asScala: RemovePermissionRequest = {
+      RemovePermissionRequest(request.getStatementId,request.getFunctionName)
     }
   }
 
@@ -210,8 +234,8 @@ object LambdaConverters {
   implicit class AwsVpcConfig(val vpcc: aws.VpcConfig) extends AnyVal {
     def asScala: VpcConfig = {
       VpcConfig(
-        Option(vpcc.getSecurityGroupIds.asScala.toList),
-        Option(vpcc.getSubnetIds.asScala.toList)
+        Option(vpcc.getSecurityGroupIds.asScala.toList).filter(_.nonEmpty),
+        Option(vpcc.getSubnetIds.asScala.toList).filter(_.nonEmpty)
       )
     }
   }
@@ -228,8 +252,8 @@ object LambdaConverters {
   implicit class AwsVpcConfigResponse(val vpcc: aws.VpcConfigResponse) extends AnyVal {
     def asScala: VpcConfigResponse = {
       VpcConfigResponse(
-        Option(vpcc.getSecurityGroupIds.asScala.toList).filter(_.nonEmpty),
-        Option(vpcc.getSubnetIds.asScala.toList).filter(_.nonEmpty),
+        Option(vpcc.getSecurityGroupIds).map(_.asScala.toList).filter(_.nonEmpty),
+        Option(vpcc.getSubnetIds).map(_.asScala.toList).filter(_.nonEmpty),
         Option(vpcc.getVpcId)
       )
     }

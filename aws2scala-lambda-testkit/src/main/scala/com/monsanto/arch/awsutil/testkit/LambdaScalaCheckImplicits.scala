@@ -194,4 +194,30 @@ object LambdaScalaCheckImplicits {
         sourceAccount <- Gen.option(CoreGen.accountId)
       } yield AddPermissionRequest(sId,name,principal,action,sourceArn,sourceAccount)
     }
+
+  implicit lazy val arbCreateFunctionResult: Arbitrary[CreateFunctionResult] =
+    Arbitrary {
+      for {
+        arn <- arbitrary[FunctionArn]
+        name <- LambdaGen.functionName
+        runtime <- arbitrary[Runtime]
+        handler <- arbitrary[String]
+        role <- arbitrary[String]
+        description <- arbitrary[String]
+        timeout <- arbitrary[Int]
+        lastModified <- arbitrary[String]
+        memory <- arbitrary[Int]
+        version <- arbitrary[String]
+        codeHash <- arbitrary[String]
+        vpcConfig <- arbitrary[VpcConfigResponse]
+      } yield CreateFunctionResult(arn, name, runtime, handler, role, description, timeout, lastModified, memory, version, codeHash, vpcConfig)
+    }
+
+  implicit lazy val arbRemovePermissionRequest: Arbitrary[RemovePermissionRequest] =
+    Arbitrary {
+      for {
+        sId <- UtilGen.stringOf(UtilGen.wordChar,1,100)
+        name <- LambdaGen.functionName
+      } yield RemovePermissionRequest(sId,name)
+    }
 }

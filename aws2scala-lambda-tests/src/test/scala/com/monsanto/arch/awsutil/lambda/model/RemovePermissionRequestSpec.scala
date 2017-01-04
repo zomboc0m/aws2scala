@@ -7,22 +7,20 @@ import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
-class CodeLocationSpec extends FreeSpec {
+class RemovePermissionRequestSpec extends FreeSpec {
   "can be round-tripped" - {
     "from its AWS equivalent" in {
-      forAll { scalaCodeLocation: CodeLocation ⇒
-        val awsCl =
-          new aws.FunctionCodeLocation()
-            .withLocation(scalaCodeLocation.location)
-            .withRepositoryType(scalaCodeLocation.repositoryType)
+      forAll { scalaRequest: RemovePermissionRequest ⇒
+        val awsRequest =
+          new aws.RemovePermissionRequest().withFunctionName(scalaRequest.functionName).withStatementId(scalaRequest.statementId)
 
-        awsCl.asScala.asAws shouldBe awsCl
+        awsRequest.asScala.asAws shouldBe awsRequest
       }
     }
 
     "via its AWS equivalent" in {
-      forAll { scalaCodeLocation: CodeLocation  ⇒
-        scalaCodeLocation.asAws.asScala shouldBe scalaCodeLocation
+      forAll { scalaRequest: RemovePermissionRequest  ⇒
+        scalaRequest.asAws.asScala shouldBe scalaRequest
       }
     }
   }

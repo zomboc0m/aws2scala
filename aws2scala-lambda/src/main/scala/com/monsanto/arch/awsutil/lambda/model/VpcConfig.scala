@@ -16,5 +16,6 @@ case class VpcConfig(securityGroupIds: Option[List[String]], subnetIds: Option[L
   *
   * @param securityGroupIds A list of one or more security groups IDs in your VPC
   * @param subnetIds        A list of one or more subnet IDs in your VPC
+  * @param vpcId            The VPC this function will be associated with and run from
   */
 case class VpcConfigResponse(securityGroupIds: Option[List[String]], subnetIds: Option[List[String]], vpcId: Option[String])
